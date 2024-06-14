@@ -10,17 +10,18 @@ import time
 
 
 def start(): #開始関数
-    screen = window.init(config.SCREEN_SIZE, "ブロック崩しv0.1")
+    GameScreen = app.Window(config.SCREEN_SIZE, "ブロック崩しv0.1")
+    screen = GameScreen.screen
     time.sleep(0.5)
-    
+    player = app.GameObj() #インスタンス化　プレーヤーを作った
     # ゲームループ
     while True:
-        screen.fill((0,0,255))   # 画面を青色で塗りつぶす
+        screen.fill(config.color['black'])   # 画面を黒色で塗りつぶす
         pygame.display.update()  # 画面を更新
 
         # イベント処理
         for event in pygame.event.get():
-            app.key(event, app.gameobj()) #キーボード処理
+            app.key(event, player) #キーボード処理
             if event.type == QUIT:  # 終了イベント
                 pygame.quit()
                 sys.exit()
