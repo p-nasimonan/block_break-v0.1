@@ -8,9 +8,13 @@ class Window:
         pygame.init()
         # タイトルバーの文字列をセット
         pygame.display.set_caption(title)
-
+        self.size =size
         # SCREEN_SIZEの画面を作成
         self.screen = pygame.display.set_mode(size)
+    def blit(self, img):
+        self.screen.blit(img)
+    def drawText(self, text, ):
+        pass
 
 
 class GameObj:
@@ -21,7 +25,8 @@ class GameObj:
         self.y += 1
 
 class textobj:
-    def __init__(self, x:int, y:int, color:tuple[int]):
+    def __init__(self, text:str, x:int, y:int, color:tuple[int]):
+        self.text = text
         self.x = x
         self.y = y
         self.color = color
