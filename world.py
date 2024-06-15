@@ -1,2 +1,3 @@
-def stage(num:int):
-    pass
+
+isstarted = False
+stage = 0
