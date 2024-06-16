@@ -9,32 +9,34 @@ import sys
 import time
 
 
-def start(): #開始関数
+def start(running): #開始関数
     GameScreen = app.WindowObject(config.SCREEN_SIZE, "ブロック崩しv0.1") #インスタンス化　ウィンドウを作成
-    
 
-    MessageText = app.textobjects(config.CenterScreen)
-    print(config.CenterScreen)
+    MessageText = app.TextObjects('center') #テキスト作成
 
-    time.sleep(0.5)
     world.stage = 1
-    player = app.GameObject('image/cloud', GameScreen) #インスタンス化　プレーヤー
+    player = app.GameObject('image/cloud.png', 200, 200) #プレーヤー作成
+    menu = app.GameObject('image/carsol.png', 50, 50, 'center') #メニュー作成
     # ゲームループ
-    while True:
+    while running:
         GameScreen.screen.fill(config.color['black'])   # 画面を黒色で塗りつぶす
         if not world.isstarted:
             MessageText.draw(GameScreen, 'スペースキーを押してスタート')
+            player.draw(GameScreen)
+            menu.draw(GameScreen)
         else:
             app.run(player, GameScreen)
-
         pygame.display.update()  # 画面を更新
         # イベント処理
         for event in pygame.event.get():
-            app.key(event, player) #キーボード処理
             if event.type == QUIT:  # 終了イベント
                 pygame.quit()
                 sys.exit()
+            else:
+                app.key(event, player) #プレイヤーのキーボード操作
+                app.mouse(event, menu)
                 
+    return start()
 
 if __name__ == "__main__":
-    start()
+    start(True)
