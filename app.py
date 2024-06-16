@@ -1,3 +1,9 @@
+'''
+次作るときは、サーフェスの作成をできるクラス作る。
+Windowは一つしかできない
+
+キーボード操作をオブジェクトで分けるのはあり
+'''
 import pygame
 from pygame.locals import *
 import sys
@@ -5,15 +11,25 @@ import time
 import config
 import world
 
+def ImageConvert(file_path, width=100, height=100):
+    img1 = pygame.image.load(file_path)
+    img2 = pygame.transform.scale(img1, (width, height))
+    return img2
+
 class WindowObject:
-    def __init__(self, SIZE:tuple[int,int]=(480, 360), TITLE:str="タイトル未定"):
+    def __init__(self, SIZE:tuple[int,int]=(480, 360), TITLE:str="タイトル未定", icon_path:str = config.images['icon']):
         # Pygameを初期化
         pygame.init()
         pygame.display.init ()
+
         # タイトルバーの文字列をセット
         pygame.display.set_caption(TITLE)
+        #アイコンをセット
+        icon = ImageConvert(icon_path)
+        pygame.display.set_icon(icon)
         # SCREEN_SIZEの画面を作成
         self.screen = pygame.display.set_mode(SIZE)
+        
         # 初期値
         self.SIZE = SIZE
 
@@ -32,7 +48,7 @@ class GameObject:
     def __init__(self, img_path:str, width:int, height:int, ReferencePos:str = 'topleft', x:int = 0, y:int = 0, ):
         self.x = x
         self.y = y
-        self.image = config.image(img_path, width, height)
+        self.image = ImageConvert(img_path, width, height)
         self.RefPos = ReferencePos
     def up(self):
         self.y -= 1
@@ -66,27 +82,29 @@ class TextObjects:
             text_rect = rect(self.RefPos, setfont, x, y)
             winobj.screen.blit(setfont, text_rect)
 
-def key(event, obj):
-    if event.type == KEYDOWN:  # キーを押したとき
-        #矢印キー
-        if event.key == K_UP:
-            obj.up()
-        if event.key == K_DOWN:
-            obj.down()
-        if event.key == K_RIGHT:
-            obj.right()
-        if event.key == K_LEFT:
-            obj.left()
+def key(obj):
+    for event in pygame.event.get():
+        if event.type == KEYDOWN:  # キーを押したとき
+            #矢印キー
+            if event.key == K_UP:
+                obj.up()
+            if event.key == K_DOWN:
+                obj.down()
+            if event.key == K_RIGHT:
+                obj.right()
+            if event.key == K_LEFT:
+                obj.left()
 
-        if event.key == K_SPACE:
-            world.isstarted = True
+            if event.key == K_SPACE:
+                world.isstarted = True
 
-def mouse(event, obj):
-    if event.type == MOUSEMOTION:
-        obj.x, obj.y = event.pos
-    if event.type == MOUSEBUTTONUP:
-        if event.button == 1:
-            obj.LeftClick()
+def mouse(obj):
+    for event in pygame.event.get():
+        if event.type == MOUSEMOTION:
+            obj.x, obj.y = event.pos
+        if event.type == MOUSEBUTTONUP:
+            if event.button == 1:
+                obj.LeftClick()
 
 def run(PlayObject:GameObject, winobj:WindowObject):
     if world.stage == 1:
