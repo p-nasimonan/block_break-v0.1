@@ -26,24 +26,6 @@ def rect(RefPos:str, Surface: pygame.Surface, x, y) -> pygame.Rect:
             res_rect = Surface.get_rect(bottomright=(x, y))
         return res_rect
 
-#=========スクリーンオブジェクト（作ってみたが、一個しかwindowはできないみたい。）==========
-class WindowObject:
-    def __init__(self, SIZE:tuple[int,int]=(480, 360), TITLE:str="タイトル未定", icon_path:str = config.images['icon']):
-        # Pygameを初期化
-        pygame.init()
-        pygame.display.init ()
-
-        # タイトルバーの文字列をセット
-        pygame.display.set_caption(TITLE)
-        #アイコンをセット
-        icon = ImageConvert(icon_path)
-        pygame.display.set_icon(icon)
-        # SCREEN_SIZEの画面を作成
-        self.screen = pygame.display.set_mode(SIZE)
-        # 初期値
-        self.SIZE = SIZE
-
-
 
 
 #===================ゲームオブジェクト============================
@@ -80,11 +62,9 @@ class GameObject:
     def move(self, x, y):
         self.x = x
         self.y = y
-
-    def draw(self, winobj:WindowObject, text:str|None = None):
-        img_rect = rect(self.RefPos, self.image, self.x, self.y)
-        winobj.screen.blit(self.image, img_rect)
-
+    
+    def draw(self, windowobj):
+        WindowObject.draw(windowobj,self)
 
     #操作監視-----------------------------
     def key(self, event):
@@ -121,15 +101,44 @@ class GameObject:
         return x, y
 
     #----------------------------------
-    
-    def run(self, winobj:WindowObject, keyfunc):
+    def run(self, keyfunc):
         self.keyfunc = keyfunc
         if world.stage == 1:
-            self.draw(winobj, self.image)
             for event in pygame.event.get():
                 self.key(event)
                 x, y = self.mouse(event)
                 self.move(x, y)
+
+#=========スクリーンオブジェクト（作ってみたが、一個しかwindowはできないみたい。）==========
+class WindowObject:
+    def __init__(self, SIZE:tuple[int,int]=(480, 360), TITLE:str="タイトル未定", icon_path:str = config.images['icon']):
+        # Pygameを初期化
+        pygame.init()
+        pygame.display.init ()
+
+        # タイトルバーの文字列をセット
+        pygame.display.set_caption(TITLE)
+        #アイコンをセット
+        icon = ImageConvert(icon_path)
+        pygame.display.set_icon(icon)
+        # SCREEN_SIZEの画面を作成
+        self.screen = pygame.display.set_mode(SIZE)
+        # 初期値
+        self.SIZE = SIZE
+
+    def draw(self, obj:GameObject, text:str|None = None):
+        if type(text) == None:
+            img_rect = rect(obj.RefPos, obj.image, obj.x, obj.y)
+            self.screen.blit(obj.image, img_rect)
+        else:
+            img_rect = rect(obj.RefPos, obj.image, obj.x, obj.y)
+            self.screen.blit(obj.image, img_rect)
+
+
+
+
+    
+
 
 class TextObjects:
     def __init__(self, ReferencePos:str = 'center', x:int = config.CenterScreen[0], y:int = config.CenterScreen[1], color:tuple[int, int, int] = config.color('white'), font:str = config.fonts[0], fontsize:int = 50):

@@ -30,9 +30,9 @@ def start(running): #開始関数
             MessageText.draw(GameScreen, 'スペースキーを押してスタート')
             #ここの状態ではスペースキーだけのdictを入れるとか
             player.draw(GameScreen)
-            carsol.run(GameScreen, {})
+            carsol.run({})
         else:
-            player.run(GameScreen)
+            player.run({})
         pygame.display.update()  # 画面を更新
         # イベント処理
         for event in pygame.event.get():
