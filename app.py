@@ -181,15 +181,22 @@ class GameObject(pygame.sprite.Sprite):
         is_self_in_other = all(o_topleft < s_bottomright) and all(s_topleft < o_bottomright)
         # どこに自分があったか(当たってる前提)
         def where_self_hit():
+            # まとめる
             self_allpos = np.concatenate([s_topleft,s_top,s_topright, s_left,s_right, s_bottomleft,s_bottom,s_bottomright], 1)
             other_allpos = np.concatenate([o_topleft,o_top,o_topright, o_left,o_right, o_bottomleft,o_bottom,o_bottomright], 1)
-            pos_diff = other_allpos - self_allpos
+            # 一旦バラして列ごとに距離を計算’
+            pos_distance = [0] * self_allpos.shape[1]
+            for i in range(len(pos_distance)):
+                print(np.linalg.norm(other_allpos[:,i] - self_allpos[:,i]))
+                pos_distance[i] = np.linalg.norm(other_allpos[:,i] - self_allpos[:,i])
             print(other_allpos)
             print(self_allpos)
-            print(pos_diff)
-            print(np.argmin(pos_diff,1))
-            allpos_index = np.unravel_index(np.argmin(pos_diff,1), pos_diff.shape)
-            print(self_allpos[allpos_index])
+            print(pos_distance)
+            min_distance = min(pos_distance)
+            print(min_distance)
+            allpos_index = pos_distance.index(min_distance)
+            print(allpos_index)
+            print(self_allpos[:, allpos_index])
             result = 0
             return result
         
