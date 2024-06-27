@@ -23,9 +23,12 @@ def start(running): #開始関数
     world1 = app.World(stage = 1)
     MessageText = app.GameObject(world1, ReferencePos = 'center', x = CENTSCx, y =  CENTSCy) #テキスト作成
     Player = app.GameObject(world1, 100, 18, imgs['player'], ReferencePos = 'topleft', x = CENTSCx, y =  CENTSCy) #プレーヤー作成
+    Boll = app.GameObject(world1, 50, 50, imgs['boll'], ReferencePos = 'topleft', x = CENTSCx, y =  0, vyo = config.bollvyo) #ボール作成
+
     # ---- SPRITES:  ----
     move_sprites = pygame.sprite.Group()
     move_sprites.add(Player)
+    move_sprites.add(Boll)
     clock = pygame.time.Clock()
 
     # ---- KEYCON ----
@@ -41,9 +44,13 @@ def start(running): #開始関数
             MessageText.drawtext(GameScreen, text = 'スペースキーを押してスタート')
             MessageText.control({K_SPACE: world1.start})
         else:
+            Boll.draw(GameScreen)
             Player.draw(GameScreen)
             Player.control(arrow_key)
-            Player.physics()
+            Player.physics(True)
+            Boll.physics()
+            Boll.collision(Player)
+            Player.collision(Boll)
         pygame.display.update()  # 画面を更新
         pygame.display.flip()
         # ---- フレームを空ける ----

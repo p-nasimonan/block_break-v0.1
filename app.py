@@ -9,6 +9,7 @@ from pygame.locals import *
 import sys
 import time
 import config
+import numpy as np
 
 WIDTH, HIGHT = config.SCREEN_SIZE
 
@@ -57,7 +58,7 @@ class World:
 
 #===================ゲームオブジェクト============================
 class GameObject(pygame.sprite.Sprite):
-    def __init__(self, world:World, width:int|None = None, height:int|None = None, img_path:str|None = None, ReferencePos:str = 'topleft', x:int = 0, y:int = 0):
+    def __init__(self, world:World, width:int|None = None, height:int|None = None, img_path:str|None = None, ReferencePos:str = 'topleft', x:int = 0, y:int = 0, gravity:bool = False, vyo = 0):
         '''
         例-----------------------
         画像パス: 'image/hoge.png'
@@ -80,22 +81,34 @@ class GameObject(pygame.sprite.Sprite):
         self.y = y
         self.RefPos = ReferencePos
         self.world = world
+        self.gravity = gravity
+        if self.gravity:
+            self.ay = config.g
+        else:
+            self.ay = 0
+        self.vyo = vyo
+        self.vy = vyo
+        self.vx = 0
+        self.v = np.array([self.vx, self.vy])
+        self.ishit = False
+        self.stopv = 0.5
 
     #ここの関数を使って動かす
     def up(self):
-        self.rect.y -= 5
+        self.vy -= 5
     def down(self):
-        self.rect.y += 5
+        self.vy += 5
     def right(self):
-        self.rect.x += 5
+        self.vx += 5
     def left(self):
-        self.rect.x -= 5
+        self.vx -= 5
     def move(self, x, y):
         self.rect.x = x
         self.rect.y = y
     def LeftClick(self):
         pass
     
+
     # ----- 描画 ------
     def draw(self, winobj:WindowObject):
         img_rect = rect(self.RefPos, self.image, self.rect.x, self.rect.y)
@@ -111,20 +124,91 @@ class GameObject(pygame.sprite.Sprite):
     def update(self):
         super().update()
 
+    def stop(self, isstop):
+        if isstop:
+            self.vy = self.vy*self.stopv
+            self.vx = self.vx*self.stopv
+
     # --- 物理 ---
-    def physics(self):
+    def physics(self, isstop:bool = False):
+        # --- 積分...ではないか ---
+        self.rect.y +=  self.vy
+        self.rect.x +=  self.vx
+
+        self.stop(isstop)
+
+        # ---- 画面の端に当たった時の処理 -----
         # player.rectの右が画面幅より大きい場合
         if self.rect.right > WIDTH:
-            # player.rectのrightは画面幅になる（つまり止まる）
             self.rect.right = WIDTH
+            self.vx = -1 * self.vx
         if self.rect.left < 0:
             self.rect.left = 0
+            self.vx = -1 * self.vx
         
         #高さも同様
         if self.rect.bottom > HIGHT:
             self.rect.bottom = HIGHT
+            self.vy = -1 * self.vy
         if self.rect.top < 0:
             self.rect.top = 0
+            self.vy = -1 * self.vy
+
+
+     # --- 当たり判定 ---
+    def collision(self, other) -> bool:
+        #ndarrayに変換
+        o_topleft = np.array(other.rect.topleft).reshape(2, 1)
+        s_topleft = np.array(self.rect.topleft).reshape(2, 1)
+        o_top= np.array([other.rect.centerx, other.rect.top]).reshape(2, 1)
+        s_top = np.array([self.rect.centerx,self.rect.top]).reshape(2, 1)
+        o_topright = np.array(other.rect.topright).reshape(2, 1)
+        s_topright = np.array(self.rect.topright).reshape(2, 1)
+
+        o_left = np.array([other.rect.left, other.rect.centery]).reshape(2, 1)
+        s_left = np.array([self.rect.left, self.rect.centery]).reshape(2, 1)
+        o_right= np.array([other.rect.right, other.rect.centery]).reshape(2, 1)
+        s_right = np.array([self.rect.right, self.rect.centery]).reshape(2, 1)
+
+        o_bottomleft = np.array(other.rect.bottomleft).reshape(2, 1)
+        s_bottomleft = np.array(self.rect.bottomleft).reshape(2, 1)
+        o_bottom = np.array([other.rect.centerx, other.rect.bottom]).reshape(2, 1)
+        s_bottom = np.array([self.rect.centerx, self.rect.bottom]).reshape(2, 1)
+        o_bottomright = np.array(other.rect.bottomright).reshape(2, 1)
+        s_bottomright = np.array(self.rect.bottomright).reshape(2, 1)
+
+        #自分が相手の当たり判定に入ったか
+        is_self_in_other = all(o_topleft < s_bottomright) and all(s_topleft < o_bottomright)
+        # どこに自分があったか(当たってる前提)
+        def where_self_hit():
+            self_allpos = np.concatenate([s_topleft,s_top,s_topright, s_left,s_right, s_bottomleft,s_bottom,s_bottomright], 1)
+            other_allpos = np.concatenate([o_topleft,o_top,o_topright, o_left,o_right, o_bottomleft,o_bottom,o_bottomright], 1)
+            pos_diff = other_allpos - self_allpos
+            print(other_allpos)
+            print(self_allpos)
+            print(pos_diff)
+            print(np.argmin(pos_diff,1))
+            allpos_index = np.unravel_index(np.argmin(pos_diff,1), pos_diff.shape)
+            print(self_allpos[allpos_index])
+            result = 0
+            return result
+        
+
+        if is_self_in_other and not self.ishit:
+            where_self_hit()
+            self.ishit = True
+            #跳ね返り
+            self.vy = -1 * self.vy
+            
+            #範囲外に追い出す
+            self.rect.y += self.vy * 5
+        else:
+            self.ishit = False
+
+        return self.ishit
+
+
+
     #操作監視-----------------------------
     def key(self, keyfunc:dict):
         #dictで保存したキー:実行する内容
