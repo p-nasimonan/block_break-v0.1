@@ -9,7 +9,7 @@ from pygame.locals import *
 import sys
 import time
 import config
-import numpy as np
+
 
 WIDTH, HIGHT = config.SCREEN_SIZE
 
@@ -58,7 +58,7 @@ class World:
 
 #===================ゲームオブジェクト============================
 class GameObject(pygame.sprite.Sprite):
-    def __init__(self, world:World, width:int|None = None, height:int|None = None, img_path:str|None = None, ReferencePos:str = 'topleft', x:int = 0, y:int = 0, gravity:bool = False, vyo = 0):
+    def __init__(self, world:World, width:int|None = None, height:int|None = None, img_path:str|None = None, ReferencePos:str = 'topleft', x:int = 0, y:int = 0, gravity:bool = False, vyo = 0, stopk = 0.4):
         '''
         例-----------------------
         画像パス: 'image/hoge.png'
@@ -89,9 +89,9 @@ class GameObject(pygame.sprite.Sprite):
         self.vyo = vyo
         self.vy = vyo
         self.vx = 0
-        self.v = np.array([self.vx, self.vy])
+        self.v = (self.vx, self.vy)
         self.ishit = False
-        self.stopv = 0.5
+        self.stopk = stopk
 
     #ここの関数を使って動かす
     def up(self):
@@ -124,10 +124,6 @@ class GameObject(pygame.sprite.Sprite):
     def update(self):
         super().update()
 
-    def stop(self, isstop):
-        if isstop:
-            self.vy = self.vy*self.stopv
-            self.vx = self.vx*self.stopv
 
     # --- 物理 ---
     def physics(self, isstop:bool = False):
@@ -135,7 +131,13 @@ class GameObject(pygame.sprite.Sprite):
         self.rect.y +=  self.vy
         self.rect.x +=  self.vx
 
-        self.stop(isstop)
+        # 摩擦抗力的な
+        def stop(isstop):
+            if isstop:
+                self.vy = self.vy*self.stopk
+                self.vx = self.vx*self.stopk
+
+        stop(isstop)
 
         # ---- 画面の端に当たった時の処理 -----
         # player.rectの右が画面幅より大きい場合
@@ -154,58 +156,19 @@ class GameObject(pygame.sprite.Sprite):
             self.rect.top = 0
             self.vy = -1 * self.vy
 
+    #ここどうにかしたい↓
 
-     # --- 当たり判定 ---
+    # --- 当たり判定 ---
     def collision(self, other) -> bool:
-        #ndarrayに変換
-        o_topleft = np.array(other.rect.topleft).reshape(2, 1)
-        s_topleft = np.array(self.rect.topleft).reshape(2, 1)
-        o_top= np.array([other.rect.centerx, other.rect.top]).reshape(2, 1)
-        s_top = np.array([self.rect.centerx,self.rect.top]).reshape(2, 1)
-        o_topright = np.array(other.rect.topright).reshape(2, 1)
-        s_topright = np.array(self.rect.topright).reshape(2, 1)
 
-        o_left = np.array([other.rect.left, other.rect.centery]).reshape(2, 1)
-        s_left = np.array([self.rect.left, self.rect.centery]).reshape(2, 1)
-        o_right= np.array([other.rect.right, other.rect.centery]).reshape(2, 1)
-        s_right = np.array([self.rect.right, self.rect.centery]).reshape(2, 1)
+        #自分が相手に当たったか
+        is_self_collide_other = self.rect.colliderect(other.rect)
 
-        o_bottomleft = np.array(other.rect.bottomleft).reshape(2, 1)
-        s_bottomleft = np.array(self.rect.bottomleft).reshape(2, 1)
-        o_bottom = np.array([other.rect.centerx, other.rect.bottom]).reshape(2, 1)
-        s_bottom = np.array([self.rect.centerx, self.rect.bottom]).reshape(2, 1)
-        o_bottomright = np.array(other.rect.bottomright).reshape(2, 1)
-        s_bottomright = np.array(self.rect.bottomright).reshape(2, 1)
-
-        #自分が相手の当たり判定に入ったか
-        is_self_in_other = all(o_topleft < s_bottomright) and all(s_topleft < o_bottomright)
-        # どこに自分があったか(当たってる前提)
-        def where_self_hit():
-            # まとめる
-            self_allpos = np.concatenate([s_topleft,s_top,s_topright, s_left,s_right, s_bottomleft,s_bottom,s_bottomright], 1)
-            other_allpos = np.concatenate([o_topleft,o_top,o_topright, o_left,o_right, o_bottomleft,o_bottom,o_bottomright], 1)
-            # 一旦バラして列ごとに距離を計算’
-            pos_distance = [0] * self_allpos.shape[1]
-            for i in range(len(pos_distance)):
-                print(np.linalg.norm(other_allpos[:,i] - self_allpos[:,i]))
-                pos_distance[i] = np.linalg.norm(other_allpos[:,i] - self_allpos[:,i])
-            print(other_allpos)
-            print(self_allpos)
-            print(pos_distance)
-            min_distance = min(pos_distance)
-            print(min_distance)
-            allpos_index = pos_distance.index(min_distance)
-            print(allpos_index)
-            print(self_allpos[:, allpos_index])
-            result = 0
-            return result
-        
-
-        if is_self_in_other and not self.ishit:
-            where_self_hit()
+        if is_self_collide_other and not self.ishit:
             self.ishit = True
+            print('hit!')
             #跳ね返り
-            self.vy = -1 * self.vy
+            self.vy = -1 * self.vy  # 何でもかんでもマイナスにするのはよろしくない
             
             #範囲外に追い出す
             self.rect.y += self.vy * 5
@@ -221,9 +184,9 @@ class GameObject(pygame.sprite.Sprite):
         #dictで保存したキー:実行する内容
         pressed_keys = pygame.key.get_pressed()
         try:
-            for key in keyfunc:
+            for key, func in keyfunc.items(): # keyfunc = {key: function}
                 if pressed_keys[key]:
-                    keyfunc[key]()
+                    func()
         except:
             pass
 

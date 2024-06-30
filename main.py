@@ -22,7 +22,7 @@ def start(running): #開始関数
     GameScreen = app.WindowObject(SCREEN_SIZE, "ブロック崩しv0.1") #インスタンス化　ウィンドウを作成
     world1 = app.World(stage = 1)
     MessageText = app.GameObject(world1, ReferencePos = 'center', x = CENTSCx, y =  CENTSCy) #テキスト作成
-    Player = app.GameObject(world1, 100, 18, imgs['player'], ReferencePos = 'topleft', x = CENTSCx, y =  CENTSCy) #プレーヤー作成
+    Player = app.GameObject(world1, 100, 18, imgs['player'], ReferencePos = 'topleft', x = CENTSCx, y =  CENTSCy, stopk=0.9) #プレーヤー作成
     Boll = app.GameObject(world1, 50, 50, imgs['boll'], ReferencePos = 'topleft', x = CENTSCx, y =  0, vyo = config.bollvyo) #ボール作成
 
     # ---- SPRITES:  ----
