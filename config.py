@@ -44,3 +44,4 @@ images:dict[str, str] = {   'icon': 'image/icon.png',
 # ====== 物理 =========
 bollvyo = 5
 g = 1
+PLAYER_A = 5

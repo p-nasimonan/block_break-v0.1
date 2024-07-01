@@ -48,7 +48,7 @@ def start(running): #開始関数
             Player.draw(GameScreen)
             Player.control(arrow_key)
             Player.physics(True)
-            Boll.physics()
+            Boll.physics(True)
             Boll.collision(Player)
             Player.collision(Boll)
         pygame.display.update()  # 画面を更新

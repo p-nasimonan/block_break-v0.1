@@ -58,7 +58,7 @@ class World:
 
 #===================ゲームオブジェクト============================
 class GameObject(pygame.sprite.Sprite):
-    def __init__(self, world:World, width:int|None = None, height:int|None = None, img_path:str|None = None, ReferencePos:str = 'topleft', x:int = 0, y:int = 0, gravity:bool = False, vyo = 0, stopk = 0.4):
+    def __init__(self, world:World, width:int|None = None, height:int|None = None, img_path:str|None = None, ReferencePos:str = 'topleft', x:int = 0, y:int = 0, gravity:bool = False, vyo = 0, vxo = 0, stopk = 0.4,va = config.PLAYER_A):
         '''
         例-----------------------
         画像パス: 'image/hoge.png'
@@ -67,12 +67,13 @@ class GameObject(pygame.sprite.Sprite):
         基準点: 'center' | 'topleft' | 'bottomright'
         x: 100 
         y: 100
-        初期マウス操作{マウスの動作:実行内容}: {K_UP: self.up}
-        初期キー設定{キー:実行内容}: {K_UP: self.up}
+        初期マウス操作{マウスの動作:実行内容, 引数}: {K_UP: self.up,()}
+        初期キー設定{キー:実行内容, 引数}: {K_UP: self.up,()}
 
         '''
         super().__init__()
-        if not width == None or not height == None or not img_path == None:
+        #画像の場合
+        if not (width == None and height == None and img_path == None):
             self.image = ImageConvert(img_path, width, height)
             self.rect = self.image.get_rect()
             self.rect.x = x
@@ -86,22 +87,29 @@ class GameObject(pygame.sprite.Sprite):
             self.ay = config.g
         else:
             self.ay = 0
+        self.ax = 0
+        self.vxo = vxo
         self.vyo = vyo
         self.vy = vyo
         self.vx = 0
-        self.v = (self.vx, self.vy)
+        self.va = va
         self.ishit = False
         self.stopk = stopk
 
     #ここの関数を使って動かす
     def up(self):
-        self.vy -= 5
+        self.vy -= self.va
     def down(self):
-        self.vy += 5
+        self.vy += self.va
     def right(self):
-        self.vx += 5
+        self.vx += self.va
     def left(self):
-        self.vx -= 5
+        self.vx -= self.va
+
+    # change v(低速モードなど)
+    def chv(self, va):
+        self.va = va
+    
     def move(self, x, y):
         self.rect.x = x
         self.rect.y = y
@@ -134,8 +142,12 @@ class GameObject(pygame.sprite.Sprite):
         # 摩擦抗力的な
         def stop(isstop):
             if isstop:
-                self.vy = self.vy*self.stopk
-                self.vx = self.vx*self.stopk
+                if abs(self.vyo) > abs(self.vy):
+                    self.vy = self.vy*(2-self.stopk)
+                if abs(self.vyo) < abs(self.vy):
+                    self.vy = self.vy*self.stopk
+                if abs(self.vxo) < abs(self.vx):
+                    self.vx = self.vx*self.stopk
 
         stop(isstop)
 
@@ -168,10 +180,10 @@ class GameObject(pygame.sprite.Sprite):
             self.ishit = True
             print('hit!')
             #跳ね返り
-            self.vy = -1 * self.vy  # 何でもかんでもマイナスにするのはよろしくない
+            self.vy = -1 * self.vy + other.vy  # 何でもかんでもマイナスにするのはよろしくない
             
             #範囲外に追い出す
-            self.rect.y += self.vy * 5
+            self.rect.y += self.vy
         else:
             self.ishit = False
 
