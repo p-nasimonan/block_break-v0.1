@@ -14,17 +14,19 @@ imgs = config.images
 color = config.color
 SCREEN_SIZE = config.SCREEN_SIZE
 CENTSCx, CENTSCy = config.CenterScreen 
-FPS = 60
+FPS = 160
+dt = 60/FPS
+app.delta_time = dt
 
 
 
 def start(running): #開始関数
-
+    
     # ------   インスタンス化　  -------
     GameScreen = app.WindowObject(SCREEN_SIZE, "ブロック崩しv0.1") #ウィンドウを作成
     world1 = app.World(stage = 1)
     MessageText = app.GameObject(world1, ReferencePos = 'center', x = CENTSCx, y =  CENTSCy) #テキスト作成
-    Player = app.GameObject(world1, 200, 5, img_path = imgs['player'], ReferencePos = 'topleft', x = CENTSCx, y =  CENTSCy+100, stopk=0.9) #プレーヤー作成
+    Player = app.GameObject(world1, 200, 5, img_path = imgs['player'], ReferencePos = 'topleft', x = CENTSCx, y =  CENTSCy+100, stopk=0.3) #プレーヤー作成
     Boll = app.GameObject(world1, 50, 50, img_path = imgs['boll'], ReferencePos = 'topleft', x = CENTSCx, y =  CENTSCy+50, vxo = config.bollvxo, vyo = config.bollvyo) #ボール作成
     Blocks = [app.GameObject(world1, config.block_sizex, config.block_sizey, img_path = world1.block_imgs[i], ReferencePos = 'topleft', x = world1.block_xy[i][0], y =  world1.block_xy[i][1], deltable = True) for i in range(len(world1.block_xy))] #ブロック作成
 
@@ -38,7 +40,7 @@ def start(running): #開始関数
     # ---- KEYCON ----
     player_key = {
     K_RIGHT: Player.right, K_LEFT: Player.left,
-    K_LSHIFT: ({Player.chv: 1}, {Player.chv: 5})
+    K_LSHIFT: ({Player.chv: 1}, {Player.chv: 3})
 
     }
     # ゲームループ

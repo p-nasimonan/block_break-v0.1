@@ -128,13 +128,13 @@ class GameObject(pygame.sprite.Sprite):
 
     #=============   操作する関数   =====================
     def up(self):
-        self.vy -= self.va
+        self.vy -= self.va * delta_time
     def down(self):
-        self.vy += self.va
+        self.vy += self.va * delta_time
     def right(self):
-        self.vx += self.va
+        self.vx += self.va * delta_time
     def left(self):
-        self.vx -= self.va
+        self.vx -= self.va * delta_time
 
     # change v(低速速モードなど)
     def chv(self, va):
@@ -187,28 +187,21 @@ class GameObject(pygame.sprite.Sprite):
     # 摩擦的な
     def stop(self, isstop):
         if isstop:
-            if abs(self.vyo) > abs(self.vy):
-                self.vy = self.vy*(2-self.stopk)
-            if abs(self.vyo) < abs(self.vy):
-                self.vy = self.vy*self.stopk
-
-            if abs(self.vxo) > abs(self.vx):
-                self.vx = self.vx*(2-self.stopk)
-            if abs(self.vxo) < abs(self.vx):
-                self.vx = self.vx*self.stopk
+            self.vy *= max(0, 1 - self.stopk * delta_time)
+            self.vx *= max(0, 1 - self.stopk * delta_time)
 
     # --- 当たり判定 ---
     def collision(self):
             #移動後の位置を計算
             new_rect = self.rect.copy()  
-            new_rect.y += self.vy
-            new_rect.x += self.vx
+            new_rect.y += self.vy * delta_time
+            new_rect.x += self.vx * delta_time
             for other in self.world.objects:
                 if other is not self:
                     #移動後の相手の位置を計算
                     new_other_rect = other.rect.copy()
-                    new_other_rect.y += other.vy
-                    new_other_rect.x += other.vx
+                    new_other_rect.y += other.vy * delta_time   
+                    new_other_rect.x += other.vx * delta_time
                     
                     #自分が相手に当たるか
                     new_is_self_collide_other = new_rect.colliderect(new_other_rect)
@@ -217,7 +210,7 @@ class GameObject(pygame.sprite.Sprite):
                             other.kill()
                         self.ishit[other] = True
                         if abs(self.vx) > abs(self.vy):
-                            self.vx = -self.vx
+                            self.vx = -self.vx 
                         else:
                             self.vy = -self.vy
 
@@ -235,8 +228,8 @@ class GameObject(pygame.sprite.Sprite):
                 self.collision()    
 
             # --- 位置調整 ---
-            self.rect.y += self.vy
-            self.rect.x += self.vx
+            self.rect.y += self.vy * delta_time
+            self.rect.x += self.vx * delta_time
 
             self.stop(isstop)
 
