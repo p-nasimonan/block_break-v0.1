@@ -1,14 +1,21 @@
 '''
-次作るときは、サーフェスの作成をできるクラス作る。
 Windowは一つしかできない
 
-キーボード操作をオブジェクトで分けるのはあり
+GameObject:ゲームに表示するスプライト全般を作れる
+    update()は必須
+    control()はキーボードとマウスの操作をする。
+    physics()は物理演算をする。
+    draw()は描画をする。
+
+World:ゲームの世界を作れる。
+    start()はゲームを開始する。
+    add_object()はゲームオブジェクトを追加する。(GameObjectのinitに含まれている)
 '''
 import pygame
 from pygame.locals import *
 import sys
 import time
-import config
+import app.config as config
 
 
 WIDTH, HIGHT = config.SCREEN_SIZE
@@ -62,7 +69,7 @@ class World:
 
 #===================ゲームオブジェクト============================
 class GameObject(pygame.sprite.Sprite):
-    def __init__(self, world:World, width:int|None = None, height:int|None = None, img_path:str|None = None, ReferencePos:str = 'topleft', x:int = 0, y:int = 0, gravity:bool = False, vxo = 0, vyo = 0, stopk = 0.4,va = config.PLAYER_A):
+    def __init__(self, world:World, width:int|None = None, height:int|None = None, img_path:str|None = None, ReferencePos:str = 'topleft', x:int = 0, y:int = 0, gravity:bool = False, vxo = 0, vyo = 0, stopk = 0.4,va = config.PLAYER_A, deltable:bool = False, is_show:bool = True):
         '''
         例-----------------------
         画像パス: 'image/hoge.png'
@@ -112,11 +119,13 @@ class GameObject(pygame.sprite.Sprite):
         self.vy = vyo
         self.vx = vxo
         self.va = va
-        self.ishit = {obj:False for obj in self.world.objects}
+        self.ishit = {obj:False for obj in self.world.objects} #全てのオブジェクトとの当たり判定をFalseにする
         self.stopk = stopk
+        self.deltable = deltable
+        self.is_show = is_show
 
 
-    #ここの関数を使って動かす
+    #=============   操作する関数   =====================
     def up(self):
         self.vy -= self.va
     def down(self):
@@ -135,27 +144,40 @@ class GameObject(pygame.sprite.Sprite):
         self.rect.y = y
     def LeftClick(self):
         pass
+
+    def kill(self):
+        self.is_show = False
+        self.world.objects.remove(self)
+
     
 
-    # ----- 描画 ------
+    # ========= 描画 =========
     def draw(self, winobj:WindowObject):
-        img_rect = rect(self.RefPos, self.image, self.rect.x, self.rect.y)
-        winobj.screen.blit(self.image, img_rect)
+        if self.is_show:
+            img_rect = rect(self.RefPos, self.image, self.rect.x, self.rect.y)
+            winobj.screen.blit(self.image, img_rect)
     
     def drawtext(self, winobj:WindowObject, text:str|None = None, color:tuple[int, int, int] = config.color('white'), font:str = config.fonts[0], fontsize:int = 50):
-        pyfont = pygame.font.Font(font, fontsize)
-        setfont = pyfont.render(text, True, color)
-        img_rect = rect(self.RefPos, setfont, self.x, self.y)
-        winobj.screen.blit(setfont, img_rect)
+        if self.is_show:
+            pyfont = pygame.font.Font(font, fontsize)
+            setfont = pyfont.render(text, True, color)
+            img_rect = rect(self.RefPos, setfont, self.x, self.y)
+            winobj.screen.blit(setfont, img_rect)
 
-    # --- 常にやる処理 -----
+    # ========= 常にやる処理 =========
     def update(self):
-        super().update()
-        if len(self.world.objects) > len(self.ishit):
-            self.ishit[self.world.objects[-1]] = False
+        if self.is_show:
+            super().update()
+            if len(self.world.objects) > len(self.ishit):
+                self.ishit[self.world.objects[-1]] = False
+            else:
+                for obj in self.world.objects:
+                    if not obj.is_show:
+                        self.world.objects.remove(obj)
 
 
-    # 摩擦抗力的な
+    #=============   物理   =====================
+    # 摩擦的な
     def stop(self, isstop):
         if isstop:
             if abs(self.vyo) > abs(self.vy):
@@ -168,61 +190,68 @@ class GameObject(pygame.sprite.Sprite):
             if abs(self.vxo) < abs(self.vx):
                 self.vx = self.vx*self.stopk
 
-    # --- 物理 ---
-    def physics(self, isstop:bool = False, collision:bool = False):
-        # --- 当たり判定 ---
-        if collision:
-            new_rect = self.rect.copy()  # 予測したい
+    # --- 当たり判定 ---
+    def collision(self):
+            #移動後の位置を計算
+            new_rect = self.rect.copy()  
             new_rect.y += self.vy
             new_rect.x += self.vx
             for other in self.world.objects:
                 if other is not self:
+                    #移動後の相手の位置を計算
                     new_other_rect = other.rect.copy()
                     new_other_rect.y += other.vy
                     new_other_rect.x += other.vx
+                    
                     #自分が相手に当たるか
-                    is_self_collide_other = new_rect.colliderect(new_other_rect)
-                    if is_self_collide_other and not self.ishit[other]:
+                    new_is_self_collide_other = new_rect.colliderect(new_other_rect)
+                    if new_is_self_collide_other and not self.ishit[other]:
+                        if other.deltable:
+                            other.kill()
                         self.ishit[other] = True
-                        print(self.ishit)
+                        if abs(self.vx) > abs(self.vy):
+                            self.vx = -self.vx
+                        else:
+                            self.vy = -self.vy
 
-                        self.vy = -1 * self.vy #+ other.vy   #<-跳ね返りと相手の速度が影響されるとずっと加速していくから良くない
-                        self.vx = -1 * self.vx #+ other.vx
+                        #後ずけの防止対策よりも先にこの状況になることを防ぎたい
 
                     else:
                         self.ishit[other] = False
-                    del new_other_rect
+    
 
-        self.rect.y += self.vy
-        self.rect.x += self.vx
+    # --- 物理 ---
+    def physics(self, isstop:bool = False, collision:bool = False):
+        if self.is_show:    
+            # --- 当たり判定 ---
+            if collision:
+                self.collision()    
 
-        self.stop(isstop)
+            # --- 位置調整 ---
+            self.rect.y += self.vy
+            self.rect.x += self.vx
 
-        # ---- 画面の端に当たった時の処理 -----
-        # player.rectの右が画面幅より大きい場合
-        if self.rect.right > WIDTH:
-            self.rect.right = WIDTH
-            self.vx = -1 * self.vx
-        if self.rect.left < 0:
-            self.rect.left = 0
-            self.vx = -1 * self.vx
-        
-        #高さも同様
-        if self.rect.bottom > HIGHT:
-            self.rect.bottom = HIGHT
-            self.vy = -1 * self.vy
-        if self.rect.top < 0:
-            self.rect.top = 0
-            self.vy = -1 * self.vy
+            self.stop(isstop)
 
-
-        
-
-
-
+            # ---- 画面の端に当たった時の処理 -----
+            # player.rectの右が画面幅より大きい場合
+            if self.rect.right > WIDTH:
+                self.rect.right = WIDTH
+                self.vx = -1 * self.vx
+            if self.rect.left < 0:
+                self.rect.left = 0
+                self.vx = -1 * self.vx
+            
+            #高さも同様
+            if self.rect.bottom > HIGHT:
+                self.rect.bottom = HIGHT
+                self.vy = -1 * self.vy
+            if self.rect.top < 0:
+                self.rect.top = 0
+                self.vy = -1 * self.vy
 
 
-    #操作監視-----------------------------
+    #=============   操作   =====================
     def key(self, keyfunc:dict):
         #dictで保したキー:実行する内容
         pressed_keys = pygame.key.get_pressed()
@@ -249,12 +278,13 @@ class GameObject(pygame.sprite.Sprite):
         '''
         pygame.event.get()を使ってeventを取得する。get()を使った後eventは消えるため注意
         '''
-        self.key(keyfunc)
-        for event in pygame.event.get():   
-            if not mousefunc == {}:
-                self.mouse(event, mousefunc)
+        if self.is_show:
+            self.key(keyfunc)
+            for event in pygame.event.get():   
+                if not mousefunc == {}:
+                    self.mouse(event, mousefunc)
 
-            if event.type == QUIT:  # 終了イベント
+                if event.type == QUIT:  # 終了イベント
                     pygame.quit()
                     sys.exit()
 

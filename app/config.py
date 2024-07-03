@@ -1,3 +1,8 @@
+'''
+設定ファイル
+
+'''
+
 
 # ======== 見た目 ==========
 SCREEN_SIZE = (1280, 720) # 画面サイズ
@@ -43,43 +48,43 @@ images:dict[str, str] = {   'icon': 'image/icon.png',
                         }
 
 # ====== 物理 =========
-bollvyo = 5
+bollvyo = 10
 bollvxo = 5
 g = 1
 PLAYER_A = 5
 
 # ===== ブロックの設定 =========
-block_sizex = 100
-block_sizey = 100
-space = 10
+block_sizex = 50
+block_sizey = 50
+spacex = 20
+spacey = 10
 blockpos =  [
-            [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 0, 0, 0, 1],
+            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             ]
-
-block_img_path = [images['block1'], images['block2']]
 
 # --- 直感的なリストから座標に変換 ----
 def blocklist_convert(blocklist:list[list[int]]) -> tuple[list[tuple[int, int]], list[str]]:
     result_xy = []
     result_img = []
-    for i in range(len(blocklist)):
-        for j in range(len(blocklist[i])):
-            if blocklist[i][j] == 1:
-                result_xy.append(((block_sizex+space)*i, (block_sizey+space)*j))
-                result_img.append(block_img_path[0])
-            elif blocklist[i][j] == 0:
+    reference_x = CenterScreen[0] - (block_sizex * len(blocklist[0]) // 2)
+    for y in range(len(blocklist)):
+        for x in range(len(blocklist[y])):
+            if blocklist[y][x] == 1:
+                result_xy.append(((block_sizex+spacex)*x + reference_x, (block_sizey+spacey)*y))
+                result_img.append(images['block1'])
+            elif blocklist[y][x] == 0:
                 continue
             else:
-                raise ValueError(f'blocklist[{i}][{j}]は無効な値です: {blocklist[i][j]}')
+                raise ValueError(f'blocklist[{y}][{x}]は無効な値です: {blocklist[y][x]}')
     return result_xy, result_img
 
 block_xy, block_imgs = blocklist_convert(blockpos)
