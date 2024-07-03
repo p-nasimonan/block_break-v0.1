@@ -57,7 +57,8 @@ class World:
     def __init__(self, isstarted:bool = False, stage:int = 1):
         self.isstarted = isstarted
         self.stage = stage
-        self.objects = []  # GameObjectインスタンスを格納するリストを追加
+        self.block_xy, self.block_imgs = config.blocklist_convert(config.stage_list[stage])
+        self.objects:list[GameObject] = []  # GameObjectインスタンスを格納するリストを追加
 
     def start(self):
         self.isstarted = True
@@ -157,11 +158,17 @@ class GameObject(pygame.sprite.Sprite):
             img_rect = rect(self.RefPos, self.image, self.rect.x, self.rect.y)
             winobj.screen.blit(self.image, img_rect)
     
-    def drawtext(self, winobj:WindowObject, text:str|None = None, color:tuple[int, int, int] = config.color('white'), font:str = config.fonts[0], fontsize:int = 50):
+    def drawtext(self, winobj:WindowObject, text:str, x:int = None, y:int = None, RefPos:str = None, color:tuple[int, int, int] = config.color('white'), font:str = config.fonts[0], fontsize:int = 50):
         if self.is_show:
+            if x is None:
+                x = self.x
+            if y is None:
+                y = self.y
+            if RefPos is None:
+                RefPos = self.RefPos
             pyfont = pygame.font.Font(font, fontsize)
             setfont = pyfont.render(text, True, color)
-            img_rect = rect(self.RefPos, setfont, self.x, self.y)
+            img_rect = rect(RefPos, setfont, x, y)
             winobj.screen.blit(setfont, img_rect)
 
     # ========= 常にやる処理 =========
@@ -255,12 +262,25 @@ class GameObject(pygame.sprite.Sprite):
     def key(self, keyfunc:dict):
         #dictで保したキー:実行する内容
         pressed_keys = pygame.key.get_pressed()
-        try:
-            for key, func in keyfunc.items(): # keyfunc = {key: function}
-                if pressed_keys[key]:
-                    func()
-        except:
-            pass
+
+        for key, funcs in keyfunc.items(): # keyfunc = {key: ({func: arg}, {default_function: arg})}
+            # キーが押されたら
+            if pressed_keys[key]:
+
+                # 関数に引数をつける場合
+                if isinstance(funcs, tuple):
+                    for function, arg in funcs[0].items():
+                        function(arg)
+                else:
+                    funcs()
+            
+            # キーが離されたら
+            else:
+                # 関数に引数をつける場合
+                if isinstance(funcs, tuple):   
+                    for function, arg in funcs[1].items():
+                        function(arg)
+
 
     def mouse(self, event, mousefunc:dict):
         x, y = self.rect.x, self.rect.y
@@ -274,12 +294,19 @@ class GameObject(pygame.sprite.Sprite):
         
 
     #操作する--------------
-    def control(self, keyfunc:dict[int, object] ={}, mousefunc:dict[int, object] = {}):
+    def control(self, keyfunc:dict[int, tuple[dict[object, any], dict[object, any]]] ={}, mousefunc:dict[int, object] = {}):
         '''
+        keyfuncには、キーと関数を格納する。
+        例: {K_UP: ({self.function: 5}, {self.function: 1})}
+        キーが押されたら、self.function(5)が実行される。
+        キーが離されたら、self.function(1)が実行される。
+
+        mousefuncには、マウスと関数を格納する。
         pygame.event.get()を使ってeventを取得する。get()を使った後eventは消えるため注意
         '''
         if self.is_show:
             self.key(keyfunc)
+
             for event in pygame.event.get():   
                 if not mousefunc == {}:
                     self.mouse(event, mousefunc)

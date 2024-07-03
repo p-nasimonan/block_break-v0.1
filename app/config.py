@@ -57,25 +57,35 @@ PLAYER_A = 5
 block_sizex = 50
 block_sizey = 50
 spacex = 20
-spacey = 10
+spacey = 5
 blockpos =  [
-            [0, 0, 0, 0, 1, 1, 0, 0, 0, 1],
-            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-            [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             ]
+
+# ======= ステージの設定 =========
+stage_list = [
+    blockpos,
+    blockpos,
+    blockpos,
+    blockpos,
+    blockpos,
+]
 
 # --- 直感的なリストから座標に変換 ----
 def blocklist_convert(blocklist:list[list[int]]) -> tuple[list[tuple[int, int]], list[str]]:
     result_xy = []
     result_img = []
-    reference_x = CenterScreen[0] - (block_sizex * len(blocklist[0]) // 2)
+    reference_x = CenterScreen[0] - ((block_sizex + spacex) * len(blocklist[0]) // 2)
+
     for y in range(len(blocklist)):
         for x in range(len(blocklist[y])):
             if blocklist[y][x] == 1:
@@ -86,5 +96,3 @@ def blocklist_convert(blocklist:list[list[int]]) -> tuple[list[tuple[int, int]],
             else:
                 raise ValueError(f'blocklist[{y}][{x}]は無効な値です: {blocklist[y][x]}')
     return result_xy, result_img
-
-block_xy, block_imgs = blocklist_convert(blockpos)
