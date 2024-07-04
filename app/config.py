@@ -2,7 +2,11 @@
 設定ファイル
 
 '''
+import os
 
+FPS = 60
+dt = 60/FPS
+delta_time = dt
 
 # ======== 見た目 ==========
 SCREEN_SIZE = (1280, 720) # 画面サイズ
@@ -48,28 +52,25 @@ images:dict[str, str] = {   'icon': 'image/icon.png',
                         }
 
 # ====== 物理 =========
-bollvyo = 10
+bollvyo = -8
 bollvxo = 5
 g = 1
 PLAYER_A = 5
 
 # ===== ブロックの設定 =========
+
 block_sizex = 50
 block_sizey = 50
 spacex = 20
 spacey = 5
 blockpos =  [
-            [1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            ]
+        "1111111111",
+        "1000000001",
+        "1011111101",
+        "1000000001",
+        "1111111111",
+        "0000000000"  
+    ]
 
 # ======= ステージの設定 =========
 stage_list = [
@@ -79,20 +80,41 @@ stage_list = [
     blockpos,
     blockpos,
 ]
+STAGE_FILE = ['stage/stage0.txt', 'stage/stage1.txt', 'stage/stage2.txt', 'stage/stage3.txt', 'stage/stage4.txt', 'stage/stage5.txt']
+def write_default_stage(stage):
+    print(f'ステージファイルが存在しないので {STAGE_FILE[stage]} を作成します')
+    default_pattern = [
+        "1111111111",
+        "1000000001",
+        "1011111101",
+        "1000000001",
+        "1111111111",
+        "0000000000"  
+    ]
+    with open(STAGE_FILE[stage], 'w') as file:
+        for line in default_pattern:
+            file.write(line + "\n")
+
+def open_stage(stage):
+    if not os.path.exists(STAGE_FILE[stage]):
+        write_default_stage(stage)
+
+    with open(STAGE_FILE[stage], 'r') as file:
+        return file.read().splitlines()
 
 # --- 直感的なリストから座標に変換 ----
-def blocklist_convert(blocklist:list[list[int]]) -> tuple[list[tuple[int, int]], list[str]]:
+def blocklist_convert(blocklist:list[int]) -> tuple[list[tuple[int, int]], list[str]]:
     result_xy = []
     result_img = []
     reference_x = CenterScreen[0] - ((block_sizex + spacex) * len(blocklist[0]) // 2)
 
-    for y in range(len(blocklist)):
-        for x in range(len(blocklist[y])):
-            if blocklist[y][x] == 1:
+    for y, line in enumerate(blocklist):
+        for x, char in enumerate(line):
+            if char == "1":
                 result_xy.append(((block_sizex+spacex)*x + reference_x, (block_sizey+spacey)*y))
                 result_img.append(images['block1'])
-            elif blocklist[y][x] == 0:
+            elif char == "0":
                 continue
             else:
-                raise ValueError(f'blocklist[{y}][{x}]は無効な値です: {blocklist[y][x]}')
+                raise ValueError(f'blocklist[{y}][{x}]は無効な値です: {char}')
     return result_xy, result_img

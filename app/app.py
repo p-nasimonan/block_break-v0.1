@@ -15,7 +15,10 @@ import pygame
 from pygame.locals import *
 import sys
 import time
+import random
+import math
 import app.config as config
+delta_time = config.delta_time
 
 
 WIDTH, HIGHT = config.SCREEN_SIZE
@@ -57,7 +60,8 @@ class World:
     def __init__(self, isstarted:bool = False, stage:int = 1):
         self.isstarted = isstarted
         self.stage = stage
-        self.block_xy, self.block_imgs = config.blocklist_convert(config.stage_list[stage])
+        file = config.open_stage(stage)
+        self.block_xy, self.block_imgs = config.blocklist_convert(file)
         self.objects:list[GameObject] = []  # GameObjectインスタンスを格納するリストを追加
 
     def start(self):
@@ -209,10 +213,11 @@ class GameObject(pygame.sprite.Sprite):
                         if other.deltable:
                             other.kill()
                         self.ishit[other] = True
-                        if abs(self.vx) > abs(self.vy):
-                            self.vx = -self.vx 
-                        else:
-                            self.vy = -self.vy
+
+                        if self.vx > self.vy:
+                            self.vx = -1 * self.vx
+                        if self.vx < self.vy:
+                            self.vy = -1 * self.vy
 
                         #後ずけの防止対策よりも先にこの状況になることを防ぎたい
 
