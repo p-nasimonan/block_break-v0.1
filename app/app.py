@@ -57,7 +57,19 @@ class WindowObject:
 
 
 class World:
+    """ワールド(ゲームのステージ)
+    Attributes:
+        __init__: ブロックのデータをファイルから読み取り、生成
+        start: ステージを開始する
+        add_object: ブロックとかボールとかプレイヤーをこのワールドのobjectに追加しておく。
+
+    """
     def __init__(self, isstarted:bool = False, stage:int = 1):
+        """初期化
+        Args:
+            isstarted: 開始したか
+        
+        """
         self.isstarted = isstarted
         self.stage = stage
         file = config.open_stage(stage)
@@ -162,7 +174,7 @@ class GameObject(pygame.sprite.Sprite):
             img_rect = rect(self.RefPos, self.image, self.rect.x, self.rect.y)
             winobj.screen.blit(self.image, img_rect)
     
-    def drawtext(self, winobj:WindowObject, text:str, x:int = None, y:int = None, RefPos:str = None, color:tuple[int, int, int] = config.color('white'), font:str = config.fonts[0], fontsize:int = 50):
+    def drawtext(self, winobj:WindowObject, text:str, x:int|None = None, y:int|None = None, RefPos:str|None = None, color:tuple[int, int, int] = config.color('white'), font:str = config.fonts[0], fontsize:int = 50):
         if self.is_show:
             if x is None:
                 x = self.x
@@ -191,8 +203,8 @@ class GameObject(pygame.sprite.Sprite):
     # 摩擦的な
     def stop(self, isstop):
         if isstop:
-            self.vy *= max(0, 1 - self.stopk * delta_time)
-            self.vx *= max(0, 1 - self.stopk * delta_time)
+            self.vy *= max(0, 1 - self.stopk / delta_time)
+            self.vx *= max(0, 1 - self.stopk / delta_time)
 
     # --- 当たり判定 ---
     def collision(self):
@@ -290,9 +302,9 @@ class GameObject(pygame.sprite.Sprite):
                 x, y = tuple(event.pos)
                 self.LeftClick()
         
-
+    args = None|int|str
     #操作する--------------
-    def control(self, keyfunc:dict[int, tuple[dict[object, any], dict[object, any]]] ={}, mousefunc:dict[int, object] = {}):
+    def control(self, keyfunc:dict[int, tuple[dict[object, args], dict[object, args]]] ={}, mousefunc:dict[int, object] = {}):
         '''
         keyfuncには、キーと関数を格納する。
         例: {K_UP: ({self.function: 5}, {self.function: 1})}

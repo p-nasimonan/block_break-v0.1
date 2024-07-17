@@ -63,25 +63,24 @@ block_sizex = 50
 block_sizey = 50
 spacex = 20
 spacey = 5
-blockpos =  [
-        "1111111111",
-        "1000000001",
-        "1011111101",
-        "1000000001",
-        "1111111111",
-        "0000000000"  
-    ]
 
 # ======= ステージの設定 =========
-stage_list = [
-    blockpos,
-    blockpos,
-    blockpos,
-    blockpos,
-    blockpos,
-]
-STAGE_FILE = ['stage/stage0.txt', 'stage/stage1.txt', 'stage/stage2.txt', 'stage/stage3.txt', 'stage/stage4.txt', 'stage/stage5.txt']
-def write_default_stage(stage):
+STAGE_FILE=['stage/menu.txt',
+            'stage/stage1.txt',
+            'stage/stage2.txt', 
+            'stage/stage3.txt', 
+            'stage/stage4.txt', 
+            'stage/stage5.txt',
+        ]
+
+
+def write_default_stage(stage:int):
+    """
+    args: stage
+
+    output
+        -> file
+    """
     print(f'ステージファイルが存在しないので {STAGE_FILE[stage]} を作成します')
     default_pattern = [
         "1111111111",
@@ -95,15 +94,19 @@ def write_default_stage(stage):
         for line in default_pattern:
             file.write(line + "\n")
 
-def open_stage(stage):
+
+
+def open_stage(stage:int) -> list:
     if not os.path.exists(STAGE_FILE[stage]):
         write_default_stage(stage)
 
     with open(STAGE_FILE[stage], 'r') as file:
         return file.read().splitlines()
 
+
+
 # --- 直感的なリストから座標に変換 ----
-def blocklist_convert(blocklist:list[int]) -> tuple[list[tuple[int, int]], list[str]]:
+def blocklist_convert(blocklist:list[str]) -> tuple[list[tuple[int, int]], list[str]]:
     result_xy = []
     result_img = []
     reference_x = CenterScreen[0] - ((block_sizex + spacex) * len(blocklist[0]) // 2)
